@@ -37,7 +37,7 @@ Bangla EduAgent is a Multi-Agent AI system designed to democratize education for
 - Leaderboards for Bengali learners
 
 ### Phase 3: Advanced Features
-```
+```mermaid
 graph TD
     NewFeatures[New Features]
     NewFeatures --> Push[Push Notifications]
@@ -62,7 +62,7 @@ The application follows a Clean Architecture approach adapted for a React functi
 
 ### High-Level Diagram
 
-```
+```mermaid
 graph TD
     subgraph Client_Side ["Client Side - React"]
         UI[User Interface / Components]
