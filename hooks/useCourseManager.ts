@@ -1,184 +1,173 @@
-import { useState, useCallback, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { Course, CourseModule, AgentState, AgentLog, Quiz } from '../types';
-import { generateCourseSyllabus, generateModuleContent, generateQuiz } from '../services/geminiService';
+import { useState, useEffect, useCallback } from 'react';
+import { Course, CourseModule, Quiz, AgentState, Log } from '../types';
+import * as GeminiService from '../services/geminiService';
+
+const STORAGE_KEY = 'shikho-ai-course-state-v2';
 
 export const useCourseManager = () => {
   const [topic, setTopic] = useState('');
-  const [agentState, setAgentState] = useState<AgentState>(AgentState.IDLE);
   const [course, setCourse] = useState<Course | null>(null);
   const [activeModule, setActiveModule] = useState<CourseModule | null>(null);
-  const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
-  const [logs, setLogs] = useState<AgentLog[]>([]);
-
-  // Persistence: Load from local storage on mount
+  
+  const [agentState, setAgentState] = useState<AgentState>(AgentState.IDLE);
+  const [logs, setLogs] = useState<Log[]>([]);
+  
+  // Persistence
   useEffect(() => {
-    const savedCourse = localStorage.getItem('bangla_edu_course');
-    if (savedCourse) {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
       try {
-        const parsed = JSON.parse(savedCourse);
-        setCourse(parsed);
-        setAgentState(AgentState.IDLE);
+        const parsed = JSON.parse(saved);
+        if (parsed.course) setCourse(parsed.course);
+        // Note: We don't restore logs or transient states to keep start fresh
       } catch (e) {
-        console.error("Failed to load saved course", e);
+        console.warn("Failed to restore state", e);
       }
     }
   }, []);
 
-  // Persistence: Save to local storage on update
   useEffect(() => {
     if (course) {
-      localStorage.setItem('bangla_edu_course', JSON.stringify(course));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ course }));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
     }
   }, [course]);
 
-  const addLog = useCallback((agentName: AgentLog['agentName'], message: string) => {
+  // Logging Helper
+  const addLog = useCallback((source: Log['source'], message: string) => {
     setLogs(prev => [...prev, {
-      id: uuidv4(),
-      agentName,
-      message,
-      timestamp: new Date()
+      id: Date.now().toString() + Math.random(),
+      timestamp: new Date(),
+      source,
+      message
     }]);
   }, []);
 
-  const createCourse = async (inputTopic: string) => {
-    if (!inputTopic.trim()) return;
-    
+  // Actions
+  const createCourse = useCallback(async (inputTopic: string) => {
     setTopic(inputTopic);
     setAgentState(AgentState.RESEARCHING);
-    setCourse(null);
-    setLogs([]);
+    setLogs([]); // Clear previous logs
     
-    addLog('Orchestrator', `Received request for topic: "${inputTopic}"`);
-    addLog('Scraper', `Initiating Google Search grounding for course syllabus...`);
+    addLog('User', `Requested course on: "${inputTopic}"`);
+    addLog('Agent', 'Initializing Research Agent...');
+    addLog('System', 'Connecting to Gemini 3 Pro (Reasoning Model)...');
 
     try {
-      await new Promise(r => setTimeout(r, 800)); // UX delay
+      addLog('Agent', 'Searching for high-quality syllabi and resources...');
+      const generatedCourse = await GeminiService.generateCourseSyllabus(inputTopic);
       
-      addLog('Scraper', 'Found relevant resources. Parsing structure...');
-      const generatedCourse = await generateCourseSyllabus(inputTopic);
-      
-      addLog('Orchestrator', 'Syllabus structure received.');
-      addLog('Translator', 'Translated syllabus outline to Bengali.');
+      addLog('System', `Grounding check passed. Found ${generatedCourse.sources.length} sources.`);
+      addLog('Agent', `Structure generated with ${generatedCourse.modules.length} modules.`);
       
       setCourse(generatedCourse);
       setAgentState(AgentState.IDLE);
-      addLog('Orchestrator', 'Dashboard ready.');
-
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      addLog('System', `Error: ${error.message}`);
       setAgentState(AgentState.ERROR);
-      addLog('Orchestrator', 'Error: Failed to generate course structure.');
     }
-  };
+  }, [addLog]);
 
-  const selectModule = async (module: CourseModule) => {
+  const selectModule = useCallback(async (module: CourseModule) => {
     setActiveModule(module);
     
-    if (module.content) return;
-
-    setIsLoadingContent(true);
-    setAgentState(AgentState.TRANSLATING);
-    addLog('Orchestrator', `User selected module: ${module.originalTitle}`);
-    addLog('Translator', `Generating detailed Bengali content...`);
-
-    try {
-      // Ensure course is not null to satisfy TS, though logic dictates it exists here
-      if (!course) throw new Error("No course context");
-
-      const content = await generateModuleContent(course.topic, module);
+    if (!module.content) {
+      setAgentState(AgentState.WRITING);
+      addLog('Agent', `Drafting content for module: ${module.title}...`);
       
-      const updatedModule = { ...module, content };
-      setActiveModule(updatedModule);
-      
-      setCourse(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          modules: prev.modules.map(m => m.id === module.id ? updatedModule : m)
-        };
-      });
-
-      addLog('Translator', 'Content generation complete.');
-    } catch (error) {
-       addLog('Orchestrator', 'Error generating content.');
-    } finally {
-      setIsLoadingContent(false);
-      setAgentState(AgentState.IDLE);
-    }
-  };
-
-  const startQuiz = async () => {
-    if (!activeModule || !activeModule.content) return;
-
-    setAgentState(AgentState.QUIZZING);
-    addLog('Orchestrator', `Generating quiz for ${activeModule.originalTitle}`);
-
-    try {
-        const quiz = await generateQuiz(activeModule.title, activeModule.content);
-        setActiveQuiz({ ...quiz, moduleId: activeModule.id });
-        addLog('Orchestrator', 'Quiz ready.');
-    } catch (error) {
-        addLog('Orchestrator', 'Error creating quiz.');
-    } finally {
+      try {
+        if (!course) throw new Error("No course active");
+        const content = await GeminiService.generateModuleContent(course.topic, module);
+        
+        // Update module with content
+        const updatedModule = { ...module, content };
+        setActiveModule(updatedModule);
+        
+        // Update course state
+        setCourse(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            modules: prev.modules.map(m => m.id === module.id ? updatedModule : m)
+          };
+        });
+        
+        addLog('Agent', 'Lesson content generated and translated.');
         setAgentState(AgentState.IDLE);
+      } catch (error) {
+        addLog('System', 'Failed to generate content.');
+        setAgentState(AgentState.ERROR);
+      }
     }
-  };
+  }, [course, addLog]);
 
-  const completeModule = () => {
-    if (!course || !activeModule) return;
+  const startQuiz = useCallback(async () => {
+    if (!activeModule || !activeModule.content) return;
+    
+    setAgentState(AgentState.EXAMINING);
+    addLog('Agent', 'Analyzing lesson content to generate quiz...');
+    
+    try {
+      const quiz = await GeminiService.generateQuiz(activeModule.title, activeModule.content);
+      setActiveQuiz({ ...quiz, moduleId: activeModule.id });
+      addLog('Agent', 'Quiz ready.');
+      setAgentState(AgentState.IDLE);
+    } catch (error) {
+      addLog('System', 'Quiz generation failed.');
+      setAgentState(AgentState.ERROR);
+    }
+  }, [activeModule, addLog]);
 
-    const updatedModules = course.modules.map((m, idx) => {
-      if (m.id === activeModule.id) {
-        return { ...m, isCompleted: true };
-      }
-      const currentIdx = course.modules.findIndex(mod => mod.id === activeModule.id);
-      if (idx === currentIdx + 1) {
-        return { ...m, isLocked: false };
-      }
-      return m;
-    });
+  const completeModule = useCallback(() => {
+    if (!activeModule || !course) return;
+    
+    const isFirstTimeComplete = !activeModule.isCompleted;
+    
+    const updatedModules = course.modules.map(m => 
+      m.id === activeModule.id ? { ...m, isCompleted: true } : m
+    );
+    
+    // Unlock next module
+    const currentIndex = course.modules.findIndex(m => m.id === activeModule.id);
+    if (currentIndex < course.modules.length - 1) {
+      updatedModules[currentIndex + 1].isLocked = false;
+    }
 
-    const completedCount = updatedModules.filter(m => m.isCompleted).length;
-
-    setCourse({
-      ...course,
+    setCourse(prev => prev ? ({
+      ...prev,
       modules: updatedModules,
-      completedModules: completedCount
-    });
+      completedModules: isFirstTimeComplete ? prev.completedModules + 1 : prev.completedModules
+    }) : null);
 
-    setActiveModule(prev => prev ? { ...prev, isCompleted: true } : null);
+    setActiveModule(null);
     setActiveQuiz(null);
-    setActiveModule(null); // Return to dashboard
-  };
+    addLog('System', `Module "${activeModule.title}" marked as complete.`);
+  }, [course, activeModule, addLog]);
 
-  const resetCourse = () => {
+  const resetCourse = useCallback(() => {
     setCourse(null);
     setActiveModule(null);
-    setLogs([]);
+    setActiveQuiz(null);
     setTopic('');
-    localStorage.removeItem('bangla_edu_course');
-  };
+    setLogs([]);
+    setAgentState(AgentState.IDLE);
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
 
-  const exportCourseToMarkdown = () => {
+  const exportCourseToMarkdown = useCallback(() => {
     if (!course) return;
     
-    let md = `# ${course.title}\n\n`;
-    md += `${course.description}\n\n`;
-    md += `Original Topic: ${course.topic}\n\n`;
-    md += `---\n\n`;
-
-    course.modules.forEach((mod, idx) => {
-      md += `## Module ${idx + 1}: ${mod.title}\n`;
-      md += `*(${mod.originalTitle})*\n\n`;
-      md += `${mod.description}\n\n`;
-      if (mod.content) {
-        md += `${mod.content}\n\n`;
+    let md = `# ${course.title}\n\n${course.description}\n\n`;
+    course.modules.forEach((m, i) => {
+      md += `## Module ${i+1}: ${m.title}\n`;
+      md += `*${m.originalTitle}*\n\n`;
+      if (m.content) {
+        md += m.content + '\n\n---\n\n';
       } else {
-        md += `*(Content not yet generated)*\n\n`;
+        md += `(Content not generated yet)\n\n`;
       }
-      md += `---\n\n`;
     });
 
     const blob = new Blob([md], { type: 'text/markdown' });
@@ -189,8 +178,8 @@ export const useCourseManager = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+    addLog('System', 'Course exported to Markdown.');
+  }, [course, addLog]);
 
   return {
     topic,
@@ -199,7 +188,7 @@ export const useCourseManager = () => {
     course,
     activeModule,
     setActiveModule,
-    isLoadingContent,
+    isLoadingContent: agentState === AgentState.WRITING,
     activeQuiz,
     setActiveQuiz,
     logs,

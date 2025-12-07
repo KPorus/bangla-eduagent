@@ -1,60 +1,62 @@
 import React, { useEffect, useRef } from 'react';
-import { AgentLog } from '../types';
-import { Terminal, Activity, CheckCircle2 } from 'lucide-react';
+import { Log } from '../types';
+import { Terminal, Activity } from 'lucide-react';
 
 interface AgentTerminalProps {
-  logs: AgentLog[];
+  logs: Log[];
 }
 
 export const AgentTerminal: React.FC<AgentTerminalProps> = ({ logs }) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
 
   if (logs.length === 0) return null;
 
   return (
-    <div className="w-full bg-dark rounded-lg overflow-hidden border border-gray-700 shadow-xl mb-6 font-mono text-sm">
+    <div className="max-w-3xl mx-auto my-6 bg-gray-900 rounded-lg shadow-2xl overflow-hidden border border-gray-700 animate-fade-in font-mono text-sm">
       <div className="bg-gray-800 px-4 py-2 flex items-center justify-between border-b border-gray-700">
         <div className="flex items-center gap-2 text-gray-300">
-          <Terminal size={16} />
-          <span className="font-semibold">Agent Orchestrator</span>
+          <Terminal size={14} />
+          <span className="text-xs font-semibold tracking-wider">AGENT TERMINAL</span>
         </div>
         <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-500/80" />
-          <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-          <div className="w-3 h-3 rounded-full bg-green-500/80" />
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
         </div>
       </div>
       
-      <div 
-        ref={scrollRef}
-        className="p-4 max-h-48 overflow-y-auto space-y-2 text-gray-300"
-      >
+      <div className="p-4 h-48 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         {logs.map((log) => (
-          <div key={log.id} className="flex gap-3 animate-fade-in">
+          <div key={log.id} className="flex gap-3">
             <span className="text-gray-500 shrink-0">
               [{log.timestamp.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]
             </span>
-            <div className="flex-1">
-              <span className={`font-bold mr-2 ${
-                log.agentName === 'Scraper' ? 'text-purple-400' :
-                log.agentName === 'Translator' ? 'text-blue-400' :
-                'text-green-400'
+            <div className="flex gap-2">
+              <span className={`font-bold shrink-0 ${
+                log.source === 'Agent' ? 'text-primary' : 
+                log.source === 'System' ? 'text-blue-400' : 'text-gray-300'
               }`}>
-                {log.agentName}:
+                {log.source}:
               </span>
-              <span>{log.message}</span>
+              <span className="text-gray-300">{log.message}</span>
             </div>
-            {log === logs[logs.length - 1] && (
-               <Activity size={14} className="animate-pulse text-green-400 mt-1" />
-            )}
           </div>
         ))}
+        {/* Animated cursor line */}
+        <div className="flex gap-3 animate-pulse">
+           <span className="text-gray-500 invisible">
+              [00:00:00]
+           </span>
+           <div className="flex gap-2 items-center">
+              <span className="text-primary font-bold">&gt;</span>
+              <span className="w-2 h-4 bg-primary inline-block"></span>
+           </div>
+        </div>
+        <div ref={endRef} />
       </div>
     </div>
   );

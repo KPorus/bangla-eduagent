@@ -1,40 +1,30 @@
-export enum AgentState {
-  IDLE = 'IDLE',
-  RESEARCHING = 'RESEARCHING', // Searching web/Kaggle
-  PLANNING = 'PLANNING', // Structuring the course
-  TRANSLATING = 'TRANSLATING', // Generating Bengali content
-  QUIZZING = 'QUIZZING', // Generating/Taking quiz
-  COMPLETED = 'COMPLETED',
-  ERROR = 'ERROR'
-}
-
 export interface CourseModule {
   id: string;
-  title: string; // Bengali title
-  originalTitle: string; // English title for context
-  description: string; // Short summary in Bengali
-  content?: string; // Full markdown content in Bengali
+  title: string;
+  originalTitle: string;
+  description: string;
+  duration: string;
   isLocked: boolean;
   isCompleted: boolean;
-  duration: string; // e.g., "15 min"
+  content?: string; // Markdown content
 }
 
 export interface Course {
   topic: string;
-  title: string; // Bengali Course Title
+  title: string;
   description: string;
   modules: CourseModule[];
   totalModules: number;
   completedModules: number;
-  sources?: string[]; // URLs from grounding
+  sources: string[];
 }
 
 export interface QuizQuestion {
   id: string;
-  question: string; // Bengali
-  options: string[]; // Bengali
+  question: string;
+  options: string[];
   correctIndex: number;
-  explanation: string; // Bengali
+  explanation: string;
 }
 
 export interface Quiz {
@@ -42,9 +32,18 @@ export interface Quiz {
   questions: QuizQuestion[];
 }
 
-export type AgentLog = {
+export enum AgentState {
+  IDLE = 'IDLE',
+  RESEARCHING = 'RESEARCHING',
+  WRITING = 'WRITING',
+  EXAMINING = 'EXAMINING',
+  COMPLETED = 'COMPLETED',
+  ERROR = 'ERROR'
+}
+
+export interface Log {
   id: string;
-  agentName: 'Scraper' | 'Translator' | 'Orchestrator';
-  message: string;
   timestamp: Date;
-};
+  source: 'System' | 'Agent' | 'User';
+  message: string;
+}

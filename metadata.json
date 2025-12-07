@@ -1,6 +1,6 @@
 {
-  "name": "Bangla EduAgent",
-  "description": "A multi-agent system that extracts course syllabi from the web, translates them into personalized Bengali learning paths, and generates interactive quizzes.",
+  "name": "Bangla EduAgent - Bengali Learning Tutor",
+  "description": "An intelligent, adaptive course generator that creates structured syllabi, lessons, and quizzes in Bengali for any topic using Google Gemini.",
   "requestFramePermissions": [
     "microphone"
   ]

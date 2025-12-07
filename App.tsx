@@ -39,7 +39,7 @@ function App() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={resetCourse} role="button">
             <div className="bg-primary text-white p-1.5 rounded-lg shadow-sm">
                 <GraduationCap size={24} />
             </div>
@@ -90,14 +90,14 @@ function App() {
             
             <form onSubmit={handleCreateCourse} className="relative max-w-lg mx-auto group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
-                <Search className="text-gray-400 group-focus-within:text-primary" size={20} />
+                <Search className="text-white group-focus-within:text-primary" size={20} />
               </div>
               <input
                 type="text"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="What do you want to learn today?"
-                className="block w-full pl-12 pr-24 py-4 border-2 border-gray-200 rounded-2xl text-lg focus:ring-4 focus:ring-green-100 focus:border-primary transition-all shadow-sm outline-none placeholder:text-gray-400"
+                className="bg-gray-700 text-white block w-full pl-12 pr-24 py-4 border-2 border-gray-200 rounded-2xl text-lg focus:ring-4 focus:ring-green-100 focus:border-primary transition-all shadow-sm outline-none placeholder:text-gray-300"
               />
               
               <VoiceInput onTranscript={(text) => setTopic(text)} />
@@ -129,7 +129,7 @@ function App() {
         )}
 
         {/* Global Agent Terminal */}
-        {(agentState !== AgentState.IDLE || logs.length > 0) && (
+        {(agentState !== AgentState.IDLE || logs.length > 0) && !activeModule && (
           <AgentTerminal logs={logs} />
         )}
 

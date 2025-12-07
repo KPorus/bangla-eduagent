@@ -1,62 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
-  isListening?: boolean;
 }
 
 export const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
-  const [listening, setListening] = useState(false);
-  const [supported, setSupported] = useState(true);
-  const [recognition, setRecognition] = useState<any>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isSupported, setIsSupported] = useState(true);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      // @ts-ignore
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognizer = new SpeechRecognition();
-      recognizer.continuous = false;
-      recognizer.interimResults = false;
-      recognizer.lang = 'bn-BD'; // Default to Bengali, but often captures English well too in mixed mode
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'bn-BD'; // Bangla Bangladesh
+        recognition.interimResults = false;
 
-      recognizer.onstart = () => setListening(true);
-      recognizer.onend = () => setListening(false);
-      recognizer.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        onTranscript(transcript);
-      };
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          onTranscript(transcript);
+          setIsListening(false);
+        };
 
-      setRecognition(recognizer);
-    } else {
-      setSupported(false);
+        recognition.onerror = (event: any) => {
+          console.error("Speech recognition error", event.error);
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+      } else {
+        setIsSupported(false);
+      }
     }
   }, [onTranscript]);
 
-  const toggleListen = () => {
-    if (!supported || !recognition) return;
-    
-    if (listening) {
-      recognition.stop();
+  const toggleListening = () => {
+    if (!isSupported || !recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
     } else {
-      recognition.start();
+      recognitionRef.current.start();
+      setIsListening(true);
     }
   };
 
-  if (!supported) return null;
+  if (!isSupported) return null;
 
   return (
     <button
+      id="Voice_Mic"
       type="button"
-      onClick={toggleListen}
-      className={`absolute right-14 top-2 bottom-2 p-2 rounded-xl transition-all flex items-center justify-center ${
-        listening 
-          ? 'bg-red-50 text-red-600 animate-pulse border border-red-200' 
+      onClick={toggleListening}
+      className={`absolute right-20 top-2 bottom-2 mr-3 rounded-xl transition-all flex items-center justify-center
+        ${isListening 
+          ? 'bg-red-50 text-red-600 animate-pulse border border-red-100' 
           : 'text-gray-400 hover:text-primary hover:bg-green-50'
-      }`}
-      title="Voice Input (Bengali/English)"
+        }`}
+      title="Speak to learn (Bangla supported)"
     >
-      {listening ? <MicOff size={20} /> : <Mic size={20} />}
+      {isListening ? <MicOff size={20} /> : <Mic size={20} />}
     </button>
   );
 };

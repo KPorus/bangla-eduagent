@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Quiz } from '../types';
-import { Check, X, Award, RefreshCcw } from 'lucide-react';
+import { X, Check, AlertCircle, Award } from 'lucide-react';
 
 interface QuizModalProps {
   quiz: Quiz;
@@ -9,154 +9,146 @@ interface QuizModalProps {
 }
 
 export const QuizModal: React.FC<QuizModalProps> = ({ quiz, onClose, onPass }) => {
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [isAnswered, setIsAnswered] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(0);
-  const [showResult, setShowResult] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
-  const currentQuestion = quiz.questions[currentQuestionIdx];
-  const isLastQuestion = currentQuestionIdx === quiz.questions.length - 1;
+  const currentQuestion = quiz.questions[currentIndex];
+  const progress = ((currentIndex) / quiz.questions.length) * 100;
 
   const handleOptionClick = (index: number) => {
-    if (isAnswered) return;
+    if (showExplanation) return;
     setSelectedOption(index);
-    setIsAnswered(true);
-
+    setShowExplanation(true);
+    
     if (index === currentQuestion.correctIndex) {
       setScore(s => s + 1);
     }
   };
 
   const handleNext = () => {
-    if (isLastQuestion) {
-      setShowResult(true);
-      if (score >= quiz.questions.length - 1) { // Pass if mostly correct
-          // Delay call to allow UI to show score first
-          setTimeout(() => onPass(), 2000); 
-      }
-    } else {
-      setCurrentQuestionIdx(prev => prev + 1);
+    if (currentIndex < quiz.questions.length - 1) {
+      setCurrentIndex(prev => prev + 1);
       setSelectedOption(null);
-      setIsAnswered(false);
+      setShowExplanation(false);
+    } else {
+      setIsCompleted(true);
     }
   };
 
-  if (showResult) {
+  const handleFinish = () => {
+    onPass(); // Mark module as done
+    onClose();
+  };
+
+  if (isCompleted) {
     const passed = score >= Math.ceil(quiz.questions.length / 2);
+    
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${passed ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                <Award size={40} />
-            </div>
-            <h2 className="text-2xl font-bold mb-2 font-bengali">{passed ? 'অভিনন্দন! (Congratulations!)' : 'আবার চেষ্টা করুন (Try Again)'}</h2>
-            <p className="text-gray-600 mb-6 font-bengali">
-                আপনি {quiz.questions.length} টির মধ্যে {score} টি প্রশ্নের সঠিক উত্তর দিয়েছেন।
-            </p>
-            
-            <div className="flex gap-4 justify-center">
-                <button 
-                    onClick={onClose}
-                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium font-bengali"
-                >
-                    বন্ধ করুন
-                </button>
-                {!passed && (
-                    <button 
-                        onClick={() => {
-                            setScore(0);
-                            setCurrentQuestionIdx(0);
-                            setShowResult(false);
-                            setSelectedOption(null);
-                            setIsAnswered(false);
-                        }}
-                        className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-green-700 font-medium flex items-center gap-2 font-bengali"
-                    >
-                        <RefreshCcw size={16} />
-                        আবার শুরু করুন
-                    </button>
-                )}
-            </div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm animate-fade-in">
+        <div className="bg-white rounded-2xl w-full max-w-md p-8 text-center shadow-2xl">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${passed ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
+            {passed ? <Award size={40} /> : <AlertCircle size={40} />}
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {passed ? 'Great Job!' : 'Keep Practicing'}
+          </h2>
+          <p className="text-gray-600 mb-8">
+            You scored <span className="font-bold text-gray-900">{score}</span> out of {quiz.questions.length}.
+          </p>
+          
+          <button 
+            onClick={handleFinish}
+            className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-green-700 transition-colors"
+          >
+            {passed ? 'Complete Lesson' : 'Try Again Later'}
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        
         {/* Header */}
-        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-            <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                Question {currentQuestionIdx + 1}/{quiz.questions.length}
-            </span>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-            </button>
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+          <div className="flex items-center gap-3">
+             <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Quiz Mode</span>
+             <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-mono">Q{currentIndex + 1}/{quiz.questions.length}</span>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="h-1 bg-gray-100 w-full">
+          <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }}></div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 font-bengali leading-relaxed">
-                {currentQuestion.question}
-            </h3>
+        <div className="p-6 md:p-8 overflow-y-auto">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 font-bengali leading-relaxed">
+            {currentQuestion.question}
+          </h2>
 
-            <div className="space-y-3">
-                {currentQuestion.options.map((option, idx) => {
-                    let statusClass = "border-gray-200 hover:border-blue-300 hover:bg-blue-50";
-                    if (isAnswered) {
-                        if (idx === currentQuestion.correctIndex) {
-                            statusClass = "border-green-500 bg-green-50 text-green-800";
-                        } else if (idx === selectedOption) {
-                            statusClass = "border-red-300 bg-red-50 text-red-800";
-                        } else {
-                            statusClass = "border-gray-100 text-gray-400 opacity-60";
-                        }
-                    }
+          <div className="space-y-3">
+            {currentQuestion.options.map((option, idx) => {
+              let stateStyles = "border-gray-200 hover:border-blue-300 hover:bg-blue-50";
+              const isSelected = selectedOption === idx;
+              const isCorrect = currentQuestion.correctIndex === idx;
 
-                    return (
-                        <button
-                            key={idx}
-                            disabled={isAnswered}
-                            onClick={() => handleOptionClick(idx)}
-                            className={`w-full text-left p-4 rounded-xl border-2 transition-all font-bengali relative ${statusClass}`}
-                        >
-                            <span className="mr-6 block">{option}</span>
-                            {isAnswered && idx === currentQuestion.correctIndex && (
-                                <Check className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600" size={20} />
-                            )}
-                            {isAnswered && idx === selectedOption && idx !== currentQuestion.correctIndex && (
-                                <X className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500" size={20} />
-                            )}
-                        </button>
-                    );
-                })}
+              if (showExplanation) {
+                if (isCorrect) stateStyles = "border-green-500 bg-green-50 text-green-800 ring-1 ring-green-500";
+                else if (isSelected) stateStyles = "border-red-500 bg-red-50 text-red-800";
+                else stateStyles = "border-gray-100 opacity-50";
+              } else if (isSelected) {
+                stateStyles = "border-blue-500 bg-blue-50 ring-1 ring-blue-500";
+              }
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleOptionClick(idx)}
+                  disabled={showExplanation}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all font-medium flex items-center justify-between group ${stateStyles}`}
+                >
+                  <span className="font-bengali">{option}</span>
+                  {showExplanation && isCorrect && <Check size={20} className="text-green-600" />}
+                  {showExplanation && isSelected && !isCorrect && <X size={20} className="text-red-600" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Explanation Box */}
+          {showExplanation && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100 animate-fade-in">
+              <div className="flex gap-2 items-start">
+                 <div className="mt-0.5 text-blue-600"><AlertCircle size={18} /></div>
+                 <div>
+                   <p className="text-sm font-bold text-blue-900 mb-1">Explanation</p>
+                   <p className="text-sm text-blue-800 font-bengali">{currentQuestion.explanation}</p>
+                 </div>
+              </div>
             </div>
-
-            {isAnswered && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100 animate-fade-in">
-                    <p className="text-sm text-blue-800 font-bengali">
-                        <span className="font-bold block mb-1">ব্যাখ্যা (Explanation):</span>
-                        {currentQuestion.explanation}
-                    </p>
-                </div>
-            )}
+          )}
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t bg-gray-50 flex justify-end">
-            <button
-                onClick={handleNext}
-                disabled={!isAnswered}
-                className={`px-6 py-2.5 rounded-lg font-semibold transition-all font-bengali ${
-                    isAnswered 
-                        ? 'bg-primary text-white shadow-lg hover:bg-green-600'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-            >
-                {isLastQuestion ? 'ফলাফল দেখুন (Finish)' : 'পরবর্তী প্রশ্ন (Next)'}
-            </button>
+        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+          <button
+            onClick={handleNext}
+            disabled={!showExplanation}
+            className="bg-primary hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            {currentIndex === quiz.questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
+          </button>
         </div>
       </div>
     </div>
