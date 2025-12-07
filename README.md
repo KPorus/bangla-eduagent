@@ -19,6 +19,11 @@ Bangla EduAgent is a Multi-Agent AI system designed to democratize education for
 - **Persistence**: Auto-saves course progress to local storage.
 - **Export**: Download courses as Markdown files for offline study.
 
+## Pages
+![Home_page](8f9a85afebb1902546b7ad8bde9fe1ba.png)
+![Course_page](<Screenshot 2025-12-07 202614.png>)
+![Quiz_page](b6d4e770adb0dfaf9fa3ec296a5590e7.png)
+
 ## Future Roadmap
 
 ### Phase 1: User Sessions
