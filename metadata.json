@@ -1,0 +1,7 @@
+{
+  "name": "Bangla EduAgent",
+  "description": "A multi-agent system that extracts course syllabi from the web, translates them into personalized Bengali learning paths, and generates interactive quizzes.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
