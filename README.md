@@ -21,17 +21,17 @@ Bangla EduAgent is a Multi-Agent AI system designed to democratize education for
 
 ## Future Roadmap
 
-### Phase 1: User Sessions (Next 2 weeks)
+### Phase 1: User Sessions
 - Anonymous Firebase Auth for cross-device progress sync
 - `sessionId` tracking in LocalStorage for guest users
 - User preference storage (Bangla proficiency, preferred subjects)
 
-### Phase 2: Cloud Backend (1 month)
+### Phase 2: Cloud Backend
 - Supabase/PostgreSQL for user profiles and learning analytics
 - Real-time progress sync across devices
 - Leaderboards for Bengali learners
 
-### Phase 3: Advanced Features (2-3 months)
+### Phase 3: Advanced Features
 ```
 graph TD
     NewFeatures[New Features]
@@ -45,7 +45,7 @@ graph TD
 - Voice-based progress assessment
 - Content moderation dashboard
 
-### Phase 4: Enterprise (6+ months)
+### Phase 4: Enterprise
 - Multi-language support (Hindi, Urdu expansion)
 - Kaggle dataset auto-import pipeline
 - School/enterprise licensing
