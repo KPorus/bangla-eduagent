@@ -1,6 +1,6 @@
 # Bangla EduAgent
 🔥 **⚠️ IMPORTANT: Requires Paid Google Gemini Pro API Key** ⚠️
-Bangla EduAgent uses advanced Gemini 3 Pro / 2.5 Flash models with Google Search grounding. **Free tier API keys will hit rate limits quickly**. You **must** use a **paid Google AI Studio Pro plan** ($20+/month) for reliable usage.
+Bangla EduAgent uses advanced Gemini 3 Pro / 2.5 Flash models with Google Search grounding.
 
 Get your paid key: [Google AI Studio](https://aistudio.google.com/app/apikey)
 
