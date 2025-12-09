@@ -84,7 +84,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({
         {/* Module List Sidebar */}
         <div className="w-80 bg-slate-50 border-r border-slate-200 hidden lg:flex flex-col">
           {/* Progress Summary Section */}
-          <div className="p-5 border-b border-slate-200 bg-white/50 backdrop-blur-sm">
+          <div className="mt-[2rem] p-5 border-b border-slate-200 bg-white/50 backdrop-blur-sm">
              <h3 className="font-bold text-slate-800 mb-2 text-sm font-bengali flex items-center gap-2">
                <Award size={16} className="text-primary-600" />
                কোর্স অগ্রগতি (Progress)
