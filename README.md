@@ -1,120 +1,173 @@
-# Bangla EduAgent
-🔥 **⚠️ IMPORTANT: Requires Paid Google Gemini Pro API Key** ⚠️
-Bangla EduAgent uses advanced Gemini 3 Pro / 2.5 Flash models with Google Search grounding.
+# Bangla EduAgent 🎓
 
-Get your paid key: [Google AI Studio](https://aistudio.google.com/app/apikey)
+**AI-Powered Personalized Learning Path Generator in Bengali**
 
+Bangla EduAgent is a sophisticated educational web application designed to bridge the language gap in technical and general education. By leveraging Google's Gemini 3 Pro and Gemini 2.5 Flash models, it dynamically generates personalized courses, quizzes, and learning materials in the Bengali language based on user-defined topics.
 
-Bangla EduAgent is a Multi-Agent AI system designed to democratize education for Bengali speakers. By leveraging Google's Gemini 3 Pro model, it creates personalized learning paths, extracting data from high-quality sources like Kaggle and Google, and presenting it in an accessible, localized format with interactive quizzes.
+## 🚀 Project Purpose
 
-## Features
+The primary goal of this project is to democratize access to high-quality education for Bengali speakers. Traditional MOOCs (Massive Open Online Courses) are predominantly in English, creating a barrier for millions of learners. Bangla EduAgent acts as an intelligent tutor that:
+1.  **Translates & Adapts:** Instantly creates content on complex topics (e.g., "Quantum Physics", "React JS") in Bengali.
+2.  **Personalizes:** Generates a syllabus tailored to the topic.
+3.  **Validates:** Uses Google Search Grounding to ensure facts are up-to-date and provides citations.
 
-- **Multi-Agent Orchestration**:
-  - **Researcher Agent**: Scrapes and grounds data using Google Search.
-  - **Translator Agent**: Converts technical content into natural Bengali.
-  - **Examiner Agent**: Generates context-aware quizzes.
-- **Personalized Syllabus**: Generates structured modules based on user topics.
-- **Interactive Dashboard**: Tracks progress with visual charts.
-- **Voice Input**: Supports Bengali/English voice search.
-- **Persistence**: Auto-saves course progress to local storage.
-- **Export**: Download courses as Markdown files for offline study.
+## 🛑 The Challenge
 
-## Pages
-![Home_page](8f9a85afebb1902546b7ad8bde9fe1ba.png)
-![Course_page](<Screenshot 2025-12-07 202614.png>)
-![Quiz_page](b6d4e770adb0dfaf9fa3ec296a5590e7.png)
+While information is abundant, accessibility is not distributed equally:
+*   **Language Barrier:** Tech documentation and advanced tutorials are almost exclusively in English.
+*   **Static Content:** Traditional courses become outdated quickly.
+*   **Lack of Context:** Direct translation tools (like Google Translate) often fail to capture the *educational context* or technical nuance required for learning.
 
-## Future Roadmap
+**Bangla EduAgent solves this by generating fresh, context-aware, grounded educational content on demand.**
 
-### Phase 1: User Sessions
-- Anonymous Firebase Auth for cross-device progress sync
-- `sessionId` tracking in LocalStorage for guest users
-- User preference storage (Bangla proficiency, preferred subjects)
+## 🛠️ Prerequisites & Required Tools
 
-### Phase 2: Cloud Backend
-- Supabase/PostgreSQL for user profiles and learning analytics
-- Real-time progress sync across devices
-- Leaderboards for Bengali learners
+Before running the project, ensure you have the following installed:
 
-### Phase 3: Advanced Features
-```
+*   **Node.js** (v18.0.0 or higher)
+*   **npm** (Node Package Manager) or **yarn**
+*   **Google AI Studio API Key** (Required for Gemini models)
+
+## ⚙️ Setup Instructions
+
+Follow these steps to run the project locally:
+
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/your-username/bangla-eduagent.git
+    cd bangla-eduagent
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Configure Environment Variables**
+    Create a file named `.env.local` in the root directory.
+    ```bash
+    touch .env.local
+    ```
+
+4.  **Add API Key**
+    Open `.env.local` and add your Google Gemini API key:
+    ```env
+    API_KEY=your_actual_api_key_here
+    ```
+    *Note: You must use a paid tier project or a valid AI Studio key to access Gemini 3 Pro and Search Grounding.*
+
+5.  **Start the Application**
+    ```bash
+    npm start
+    ```
+    The app should now be running at `http://localhost:3000` (or the port specified by your bundler).
+
+## 💡 Solution Overview
+
+The application follows a **client-side AI architecture**. It communicates directly with Google's GenAI API from the browser to minimize latency for this prototype phase.
+
+*   **Syllabus Agent (Gemini 2.5 Flash):** Responsible for high-speed planning. It breaks down a topic into a structured JSON syllabus.
+*   **Content Agent (Gemini 3 Pro):** Responsible for deep reasoning and content generation. It writes the markdown content for each module and generates relevant quizzes.
+*   **State Management:** Uses React Hooks (`useCourseManager`) and LocalStorage to persist user progress and courses offline.
+
+## ✨ Key Features
+
+*   **Generative Course Creation:** Type any topic, and get a full course structure in seconds.
+*   **Voice Input:** Integrated Web Speech API allows users to search topics via voice commands.
+*   **Search Grounding:** Content is backed by real-time Google Search results with source links.
+*   **Interactive Quizzes:** AI-generated multiple-choice questions with detailed explanations.
+*   **Smart Preloading:** Background fetching of the "next module" ensures zero wait time between lessons.
+*   **Progress Tracking:** Dashboard with visual charts and "Certified" badges upon completion.
+*   **Bengali Typography:** Optimized fonts (`Noto Sans Bengali`) for readability.
+
+## 🏗️ Architecture Diagrams
+
+### 1. Current Architecture (Client-Side MVP)
+This version is optimized for hackathons and quick deployment, leveraging React and direct Gemini API calls.
+
+```mermaid
 graph TD
-    NewFeatures[New Features]
-    NewFeatures --> Push[Push Notifications]
-    NewFeatures --> Community[Community Sharing]
-    NewFeatures --> VoiceTrack[Voice Progress Tracking]
-    NewFeatures --> Admin[Admin Dashboard]
-```
-- Bangla course reminder notifications
-- Shared learning paths between users
-- Voice-based progress assessment
-- Content moderation dashboard
-
-### Phase 4: Enterprise
-- Multi-language support (Hindi, Urdu expansion)
-- Kaggle dataset auto-import pipeline
-- School/enterprise licensing
-- Mobile app (React Native)
-
-## Architecture
-
-The application follows a Clean Architecture approach adapted for a React functional component structure.
-
-### High-Level Diagram
-
-```
-graph TD
-    subgraph Client_Side ["Client Side - React"]
-        UI[User Interface / Components]
+    User((User))
+    
+    subgraph ClientSide ["Client Side (React)"]
+        UI[User Interface]
         Voice[Voice Input]
-        Hook[useCourseManager Hook]
+        Store[LocalStorage]
         
-        subgraph Local_Persistence
-            Store[(LocalStorage only)]
+        subgraph LogicLayer ["Logic Layer"]
+            Mgr[Course Manager Hook]
+            Preloader[Background Preloader]
         end
     end
-
-    subgraph Service_Layer ["Service Layer"]
-        GeminiService[Gemini Service Module]
+    
+    subgraph GoogleCloud ["Google Cloud / Gemini API"]
+        Router{Model Router}
+        Flash["Gemini 2.5 Flash<br>(Syllabus & Speed)"]
+        Pro["Gemini 3 Pro<br>(Content & Reasoning)"]
+        Search["Google Search<br>Grounding"]
     end
 
-    subgraph Google_AI ["Google Cloud / Gemini API"]
-        Model[Gemini 3 Pro / 2.5 Flash]
-        Search[Google Search Grounding]
-    end
-
-    User((User)) -->|"Voice/Text"| UI
-    UI -->|Actions| Hook
-    Hook <-->|Read/Write| Store
-    Hook -->|Request Data| GeminiService
-    GeminiService -->|Prompt + Tools| Model
-    Model <-->|Grounding| Search
-    Model -->|JSON/Markdown| GeminiService
-    GeminiService -->|Structured Data| Hook
-    Hook -->|State Update| UI
+    User --> UI
+    Voice --> UI
+    UI --> Mgr
+    Mgr <--> Store
+    Mgr -->|"Generate Syllabus"| Flash
+    Mgr -->|"Generate Content"| Pro
+    Preloader -->|"Fetch Next Module"| Pro
+    
+    Flash <--> Search
+    Pro <--> Search
+    
+    Flash -->|"JSON Structure"| Mgr
+    Pro -->|"Markdown + Quiz"| Mgr
 ```
 
-### Component Breakdown
+### 2. Future Architecture (Scalable Full-Stack)
+This is the target architecture designed to support 10,000+ concurrent users, authentication, and heavy processing.
 
-1. **Orchestrator (`useCourseManager`)**: Central brain. Manages state transitions (Idle -> Researching -> Translating), handles persistence, and coordinates data flow.
-2. **Service Layer (`geminiService.ts`)**: Handles direct API calls.
-   - `generateCourseSyllabus`: Uses `googleSearch` tool for grounding.
-   - `generateModuleContent`: Uses Gemini 3 Pro for high-fidelity translation/generation.
-   - `generateQuiz`: Uses JSON Schema enforcement for structured quiz output.
-3. **UI Layer**:
-   - `CourseDashboard`: Visualizes progress and modules.
-   - `ModuleViewer`: Renders Markdown content.
-   - `AgentTerminal`: Visualizes the "thinking" process of the AI agents.
+```mermaid
+graph TD
+    subgraph "Frontend (React)"
+        Client[Web Client]
+    end
 
-## Local Development Guide
+    subgraph "Backend (Nest.js)"
+        Auth[Auth Guard]
+        API[API Gateway]
+        Queue[Job Queue]
+        GeminiSvc[Gemini Service]
+    end
 
-[Keep existing installation steps unchanged...]
+    subgraph "Data Layer"
+        Mongo[(MongoDB)]
+        Redis[(Redis Cache)]
+    end
 
-## Technologies
+    subgraph "External AI"
+        GoogleAI[Google Gemini API]
+    end
 
-- **Frontend**: React 19, Tailwind CSS, Lucide React
-- **AI**: Google GenAI SDK (`@google/genai`)
-- **Models**: `gemini-3-pro-preview`, `gemini-2.5-flash`
-- **Charts**: Recharts
-- **Markdown**: React Markdown
-- **Future**: Supabase, Firebase Auth, React Native
+    Client -- "JWT Auth" --> Auth
+    Auth --> API
+    API --> Mongo
+    API -- "Heavy Tasks" --> Queue
+    Queue --> GeminiSvc
+    GeminiSvc --> GoogleAI
+    GeminiSvc -- "Cache Result" --> Redis
+```
+
+## 🌍 Project Impact
+
+*   **Accessibility:** Removes language barriers for technical skill acquisition.
+*   **Engagement:** Gamified elements (quizzes, confetti, progress bars) keep learners motivated.
+*   **Scalability:** The AI-driven model means the platform can teach *any* subject without needing human authors to write the content manually.
+
+## 🚀 Future Plans & Roadmap
+
+We are transitioning from a client-side prototype to a robust full-stack application.
+
+1.  **Backend Migration:** Move logic to **Nest.js**.
+2.  **Database:** Implement **MongoDB** for user accounts and cloud persistence.
+3.  **Authentication:** Add Login/Signup functionality.
+4.  **Admin Portal:** Tools for monitoring usage and managing users.
+5.  **Social Sharing:** Share course certificates on social media.
