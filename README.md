@@ -1,4 +1,8 @@
 # Bangla EduAgent 🎓
+🔥 **⚠️ IMPORTANT: Requires Paid Google Gemini Pro API Key** ⚠️
+Bangla EduAgent uses advanced Gemini 3 Pro / 2.5 Flash models with Google Search grounding.
+
+Get your paid key: [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 **AI-Powered Personalized Learning Path Generator in Bengali**
 
